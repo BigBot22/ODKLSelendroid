@@ -272,6 +272,7 @@ public class SelendroidServerBuilder {
     commandline.addArgument(customSelendroidServer.getAbsolutePath(), false);
     commandline.addArgument("androiddebugkey", false);
     String output = ShellCommand.exec(commandline, 20000);
+    log.info("Shell command: " + commandline);
     if (log.isLoggable(Level.INFO)) {
       log.info("App signing output: " + output);
     }

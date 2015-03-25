@@ -81,7 +81,7 @@ public class SelendroidLauncher {
       log.severe("Error occurred while registering logging file handler.");
     }
 
-    System.out.println("################# Selendroid #################");
+    System.out.println("################# My Selendroid #################");
     SelendroidConfiguration config = new SelendroidConfiguration();
     try {
       new JCommander(config, args);

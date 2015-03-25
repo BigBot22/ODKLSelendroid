@@ -21,6 +21,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.selendroid.server.handler.UIAutomatorClient;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -48,4 +49,10 @@ public class DefaultAndroidEmulatorTests {
     emulator.stop();
     Assert.assertFalse(emulator.isEmulatorStarted());
   }
+
+//    @Test
+    public void uiAutomatorClientTest() throws Exception {
+        UIAutomatorClient uiAutomatorClient = new UIAutomatorClient();
+        System.out.println("result:" + uiAutomatorClient.send("{\"cmd\":\"action\",\"action\":\"wake\",\"params\":{}}\n"));
+    }
 }

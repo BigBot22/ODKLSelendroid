@@ -32,6 +32,7 @@ import io.selendroid.android.KeySender;
 import io.selendroid.android.ViewHierarchyAnalyzer;
 import io.selendroid.android.WindowType;
 import io.selendroid.android.internal.Dimension;
+import io.selendroid.android.internal.ModeType;
 import io.selendroid.exceptions.NoSuchElementException;
 import io.selendroid.exceptions.SelendroidException;
 import io.selendroid.server.inspector.TreeUtil;
@@ -87,6 +88,7 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
   private SelendroidNativeDriver selendroidNativeDriver = null;
   private SelendroidWebDriver selendroidWebDriver = null;
   private String activeWindowType = null;
+  private String mode = null;
   private long scriptTimeout = 0L;
 
   private Map<String, NativeExecuteScript> nativeExecuteScriptMap =
@@ -225,6 +227,7 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
   public void stopSession() {
     serverInstrumentation.finishAllActivities();
     this.activeWindowType = WindowType.NATIVE_APP.name();
+    this.mode = ModeType.INSTRUMENTATION.name();
     this.session = null;
     nativeSearchScope = null;
     selendroidNativeDriver = null;
@@ -341,6 +344,15 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
 
   public void switchContext(String type) {
     Preconditions.checkNotNull(type);
+    if (type.equals(ModeType.INSTRUMENTATION.name()) || type.equals(ModeType.UIAUTOMATOR.name())) {
+        if(mode.equals(type)) {
+            return;
+        } else {
+            mode = type;
+            return;
+        }
+    }
+
     if (type.equals(activeWindowType)) {
       return;
     } else {
@@ -377,6 +389,7 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
       return session.getSessionId();
     }
     activeWindowType = WindowType.NATIVE_APP.name();
+    mode = ModeType.INSTRUMENTATION.name();
     Random random = new Random();
     this.session =
         new Session(desiredCapabilities, new UUID(random.nextLong(), random.nextLong()).toString());
@@ -752,12 +765,15 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
     long previousTimeout = serverInstrumentation.getAndroidWait().getTimeoutInMillis();
     serverInstrumentation.getAndroidWait().setTimeoutInMillis(0);
     String previousActiveWindow = activeWindowType;
+    String previousMode = mode;
     activeWindowType = WindowType.NATIVE_APP.name();
+    mode = ModeType.INSTRUMENTATION.name();
     try {
       return findElement(by);
     } catch (NoSuchElementException nse) {} finally {
       serverInstrumentation.getAndroidWait().setTimeoutInMillis(previousTimeout);
       activeWindowType = previousActiveWindow;
+      mode = previousMode;
     }
     return null;
   }
