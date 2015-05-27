@@ -59,6 +59,8 @@ public interface AndroidDevice {
 
   public void runAdbCommand(String parameter);
 
+  public String runAdbCommandWithResult(String parameter);
+
   public byte[] takeScreenshot() throws AndroidDeviceException;
 
   public void setVerbose();
@@ -70,4 +72,8 @@ public interface AndroidDevice {
   public void invokeActivity(String activity);
 
   public void restartADB();
+
+  public String getWlan();
+
+  public void stopBootstrapServer();
 }

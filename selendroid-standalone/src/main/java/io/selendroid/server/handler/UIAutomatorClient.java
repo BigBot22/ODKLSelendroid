@@ -1,32 +1,25 @@
 package io.selendroid.server.handler;
 
 import org.eclipse.jetty.util.ArrayQueue;
-import org.json.JSONException;
 
 import java.io.*;
 import java.net.*;
 import java.util.NoSuchElementException;
 import java.util.Queue;
+import java.util.logging.Logger;
 
-/**
- *
- * A complete Java class that demonstrates how to use the Socket
- * class, specifically how to open a socket, write to the socket,
- * and read from the socket.
- *
- * @author alvin alexander, devdaily.com.
- *
- */
 public class UIAutomatorClient {
-    String host = "192.168.56.101";
+    String host;
     int port = 4724;
     Socket socket;
-    SocketReader readTread;
+    SocketReader socketReader;
+    private static final Logger log = Logger.getLogger(RequestRedirectHandler.class.getName());
+    private static final int TIMEOUT = 10;
 
-    public UIAutomatorClient () throws Exception {
+    public UIAutomatorClient (String deviceIp) throws Exception {
+        host = deviceIp;
         socket = openSocket(host, port);
-        readTread = new SocketReader(socket);
-        readTread.start();
+        socketReader = new SocketReader(socket);
     }
 
     public String send(String mess)
@@ -39,26 +32,42 @@ public class UIAutomatorClient {
         return null;
     }
 
+    public void connect() {
+        socketReader.start();
+    }
+
+    public void disconnect() {
+        if (socketReader != null) {
+            socketReader.disconnect();
+            socketReader.interrupt();
+            socketReader = null;
+        }
+
+        if (socket != null) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            socket = null;
+        }
+    }
+
+
     private String writeToAndReadFromSocket(Socket socket, String writeTo) throws Exception {
         // write text to the socket
         BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         bufferedWriter.write(writeTo);
         bufferedWriter.flush();
-        return readTread.getMess();
+        return socketReader.getMess();
     }
 
-    /**
-     * Open a socket connection to the given server on the given port.
-     * This method currently sets the socket timeout value to 10 seconds.
-     * (A second version of this method could allow the user to specify this timeout.)
-     */
     private Socket openSocket(String server, int port) throws Exception
     {
-        Socket socket;
-
         // create a socket with a timeout
         try
         {
+            log.info("connecting to host:" + server + " port:" + port);
             InetAddress inteAddress = InetAddress.getByName(server);
             SocketAddress socketAddress = new InetSocketAddress(inteAddress, port);
 
@@ -80,7 +89,7 @@ public class UIAutomatorClient {
     }
 
     static class SocketReader extends Thread {
-        final BufferedReader in;
+        BufferedReader in;
         final Queue<String> messList;
 
         public SocketReader (Socket socket) throws IOException {
@@ -90,9 +99,9 @@ public class UIAutomatorClient {
 
         public String getMess() {
             int i = 0;
-            while (messList.isEmpty() && i++ < 10) {
+            while (messList.isEmpty() && i++ < TIMEOUT) {
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -100,12 +109,13 @@ public class UIAutomatorClient {
             try {
                 return messList.remove();
             } catch (NoSuchElementException e) {
-                return null;
+                return "{'value':'timeout " + TIMEOUT + "s on uiautomator client','status':1}";
             }
         }
 
         @Override
         public void run() {
+
             char c;
             StringBuilder sb = new StringBuilder();
             int balance = 0;
@@ -119,16 +129,25 @@ public class UIAutomatorClient {
                         balance--;
                     }
                     if (balance == 0) {
-                        messList.add(sb.toString());
+                        messList.offer(sb.toString());
 //                        System.out.println("new message:" + sb.toString());
                         sb = new StringBuilder();
                     }
 
-                    assert(balance < 0);
+                    if (balance < 0) {
+                        messList.offer("Error message:" + sb.toString());
+                        break;
+                    }
+
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+
+        void disconnect () {
+            this.interrupt();
+            in = null;
         }
     }
 }

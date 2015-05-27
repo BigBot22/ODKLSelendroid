@@ -34,6 +34,7 @@ import io.selendroid.server.model.By.ByLinkText;
 import io.selendroid.server.model.By.ByName;
 import io.selendroid.server.model.By.ByTagName;
 import io.selendroid.server.model.By.ByXPath;
+import io.selendroid.server.model.By.ByTsId;
 import io.selendroid.server.model.KnownElements;
 import io.selendroid.server.model.SearchContext;
 import io.selendroid.util.InstanceOfPredicate;
@@ -52,6 +53,7 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -66,7 +68,8 @@ public abstract class AbstractNativeElementContext
       FindsByText,
       FindsByXPath,
       FindsByPartialText,
-      FindsByClass {
+      FindsByClass,
+      FindsByTsId {
   protected ServerInstrumentation instrumentation;
   protected KeySender keys;
   protected KnownElements knownElements;
@@ -182,6 +185,8 @@ public abstract class AbstractNativeElementContext
       return findElementsByName(by.getElementLocator());
     } else if (by instanceof ByXPath) {
       return findElementsByXPath(by.getElementLocator());
+    } else if (by instanceof ByTsId) {
+        return findElementsByTsId(by.getElementLocator());
     }
 
     throw new UnsupportedOperationException(String.format(
@@ -204,6 +209,8 @@ public abstract class AbstractNativeElementContext
       return findElementByName(by.getElementLocator());
     } else if (by instanceof ByXPath) {
       return findElementByXPath(by.getElementLocator());
+    } else if (by instanceof ByTsId) {
+        return findElementByXPath(by.getElementLocator());
     }
     throw new UnsupportedOperationException(String.format(
         "By locator %s is curently not supported!", by.getClass().getSimpleName()));
@@ -269,8 +276,8 @@ public abstract class AbstractNativeElementContext
     return findElementsById(using, false);
   }
 
-  private List<AndroidElement> findElementsById(String using, Boolean findJustOne) {
-    List<AndroidElement> elements = new ArrayList<AndroidElement>();
+  private List<AndroidElement> findElementsByIdOrig(String using, Boolean findJustOne) {
+      List<AndroidElement> elements = new ArrayList<AndroidElement>();
     for (View view : viewAnalyzer.getViews(getTopLevelViews())) {
       String id = ViewHierarchyAnalyzer.getNativeId(view);
       if (id.equalsIgnoreCase("id/" + using) && viewAnalyzer.isViewChieldOfCurrentRootView(view)) {
@@ -446,6 +453,98 @@ public abstract class AbstractNativeElementContext
     }
     return filterAndTransformElements(currentViews, new InstanceOfPredicate(viewClass));
   }
+
+    @Override
+    public AndroidElement findElementByTsId(String using) {
+        List<AndroidElement> elements = findElementsByTsId(using, true);
+        if (!elements.isEmpty()) {
+            return elements.get(0);
+        }
+        return null;
+    }
+
+    @Override
+    public List<AndroidElement> findElementsByTsId(String using) {
+        return findElementsByTsId(using, false);
+    }
+
+    private List<AndroidElement> findElementsByTsId(String using, Boolean findJustOne) {
+        SelendroidLogger.debug("[findElementsByTsId] using:" + using);
+        SelendroidLogger.debug("MyActivity" + "[findElementsByTsId] using:" + using);
+        List<AndroidElement> elements = new ArrayList<AndroidElement>();
+        for (View view : viewAnalyzer.getViews(getTopLevelViews())) {
+
+//            String id = ViewHierarchyAnalyzer.getNativeId(view);
+
+//            if (id.equalsIgnoreCase("id/" + using) && viewAnalyzer.isViewChieldOfCurrentRootView(view)) {
+            Field field = null;
+            try {
+                field = view.getClass().getField("tsid");
+            } catch (NoSuchFieldException e) {
+//                e.printStackTrace();
+                continue;
+            }
+            if (field != null) {
+                elements.add(newAndroidElement(view));
+                SelendroidLogger.debug("MyDEBUG" + "[findElementsByTsId] got element:" + elements.get(0));
+                SelendroidLogger.debug("MyDEBUG" + "[findElementsByTsId] elements getAttribute(\"tsid\")):\n" + elements.get(0).getAttribute("tsid"));
+                try {
+                    SelendroidLogger.debug("MyDEBUG" + "[findElementsByTsId] elements getDeclaredField(\"tsid\")):\n" + view.getClass().getDeclaredField("tsid"));
+                } catch (NoSuchFieldException e) {
+                    e.printStackTrace();
+                }
+                SelendroidLogger.debug("MyDEBUG" + "[findElementsByTsId] elements getDeclaredFields():\n" + view.getClass().getDeclaredFields());
+
+                if (findJustOne) return elements;
+            }
+        }
+        return elements;
+    }
+
+    private List<AndroidElement> findElementsById(String using, Boolean findJustOne) {
+        SelendroidLogger.debug("[findElementsByTsId] using:" + using);
+
+        List<AndroidElement> elements = new ArrayList<AndroidElement>();
+        for (View view : viewAnalyzer.getViews(getTopLevelViews())) {
+
+            String id = ViewHierarchyAnalyzer.getNativeId(view);
+
+            if (id.equalsIgnoreCase("id/" + using) && viewAnalyzer.isViewChieldOfCurrentRootView(view)) {
+                elements.add(newAndroidElement(view));
+
+                Field[] fields = view.getClass().getDeclaredFields();
+                for (Field field : fields) {
+                    SelendroidLogger.debug("field:" + field.getName());
+                    try {
+                        SelendroidLogger.debug("value:" + field.get(String.class));
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+//                Field field = null;
+//                try {
+//                    field = view.getClass().getField("tsid");
+//                } catch (NoSuchFieldException e) {
+////                e.printStackTrace();
+//                    continue;
+//                }
+//                if (field != null) {
+////                    elements.add(newAndroidElement(view));
+//                    SelendroidLogger.debug("[findElementsByTsId] got element:" + elements.get(0));
+//                    SelendroidLogger.debug("[findElementsByTsId] elements getAttribute(\"tsid\")):\n" + elements.get(0).getAttribute("tsid"));
+//                    try {
+//                        SelendroidLogger.debug("[findElementsByTsId] elements getDeclaredField(\"tsid\")):\n" + view.getClass().getDeclaredField("tsid"));
+//                    } catch (NoSuchFieldException e) {
+//                        e.printStackTrace();
+//                    }
+//                    SelendroidLogger.debug("[findElementsByTsId] elements getDeclaredFields():\n" + view.getClass().getDeclaredFields());
+//
+//                    if (findJustOne) return elements;
+//                }
+            }
+        }
+        return elements;
+    }
 
   private List<AndroidElement> filterAndTransformElements(Collection<View> currentViews,
       Predicate predicate) {

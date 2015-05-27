@@ -242,6 +242,34 @@ public abstract class By {
     }
   }
 
+    public static class ByTsId extends By {
+        private final String tsId;
+
+        public ByTsId(String tsId) {
+            this.tsId = tsId;
+        }
+
+        @Override
+        public AndroidElement findElement(SearchContext context) {
+            return context.findElement(By.tsId(tsId));
+        }
+
+        @Override
+        public List<AndroidElement> findElements(SearchContext context) {
+            return context.findElements(By.tsId(tsId));
+        }
+
+        @Override
+        public String getElementLocator() {
+            return tsId;
+        }
+
+        @Override
+        public String toString() {
+            return "By.tsId: " + tsId;
+        }
+    }
+
   public static By cssSelector(String css) {
     if (css == null) throw new IllegalArgumentException("Cannot find elements when css is null.");
     return new ByCssSelector(css);
@@ -296,6 +324,17 @@ public abstract class By {
       throw new IllegalArgumentException("Cannot find elements when className is null.");
     return new ByClass(className);
   }
+
+    /**
+     * @param tsId The value of the "tsId" attribute to search for
+     * @return a By which locates elements by the value of the "id" attribute.
+     */
+    public static By tsId(final String tsId) {
+        if (tsId == null)
+            throw new IllegalArgumentException("Cannot find elements with a null id attribute.");
+
+        return new ByTsId(tsId);
+    }
 
   @Override
   public boolean equals(Object o) {

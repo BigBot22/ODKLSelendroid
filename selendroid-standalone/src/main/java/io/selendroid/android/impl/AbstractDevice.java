@@ -352,8 +352,11 @@ public abstract class AbstractDevice implements AndroidDevice {
   }
 
   public void runAdbCommand(String parameter) {
+      runAdbCommandWithResult(parameter);
+  }
+  public String runAdbCommandWithResult(String parameter) {
     if (parameter == null || parameter.isEmpty() == true) {
-      return;
+      return null;
     }
     System.out.println("running command: adb " + parameter);
     CommandLine command = adbCommand();
@@ -363,7 +366,7 @@ public abstract class AbstractDevice implements AndroidDevice {
       command.addArgument(params[i], false);
     }
 
-    executeCommand(command);
+    return executeCommand(command);
   }
 
   public byte[] takeScreenshot() throws AndroidDeviceException {
@@ -485,4 +488,45 @@ public abstract class AbstractDevice implements AndroidDevice {
     return command;
   }
 
+  public String getWlan() {
+      String result  = executeCommand(adbCommand("shell", "netcfg"));
+      System.out.println("getWlan result:" + result);
+
+      Pattern pattern = Pattern.compile("(\\d{1,3}\\.[1-9]\\d{1,2}\\.[1-9]\\d{1,2}\\.\\d{1,3})");
+      Matcher matcher = pattern.matcher(result);
+      System.out.println("getWlan:" + result);
+      if (matcher.find()) {
+          String ip = matcher.group(0);
+          System.out.println("ip:" + ip);
+          return ip;
+      }
+      matcher = pattern.matcher(serial);
+      if (matcher.find()) {
+          String ip = matcher.group(0);
+          System.out.println("ip:" + ip);
+          return ip;
+      }
+      System.out.println("ip: null");
+      return null;
+  }
+
+  public String runBootstrapServer() {
+      return executeCommand(adbCommand("sell"));
+  }
+
+  private String getUiAutomatorPID() {
+    String result = executeCommand(adbCommand("shell", "ps"));
+    Pattern pattern = Pattern.compile("shell +(\\d+) +.+ uiautomator");
+    Matcher matcher = pattern.matcher(result);
+    if (matcher.find()) {
+        String pid = matcher.group(1);
+        return pid;
+    }
+    System.out.println("pid: null");
+    return null;
+  }
+  public void stopBootstrapServer() {
+      String pid = getUiAutomatorPID();
+      executeCommand(adbCommand("shell", "kill", "" + pid));
+  }
 }

@@ -16,8 +16,13 @@ package io.selendroid.server.model;
 import io.selendroid.SelendroidCapabilities;
 import io.selendroid.android.AndroidApp;
 import io.selendroid.android.AndroidDevice;
+import io.selendroid.server.handler.UIAutomatorClient;
 
+import java.util.StringTokenizer;
 import java.util.Timer;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ActiveSession {
   private final String sessionKey;
@@ -27,14 +32,20 @@ public class ActiveSession {
   private final int selendroidServerPort;
   private boolean invalid = false;
   private final Timer stopSessionTimer = new Timer(true);
+  private boolean uiAutomationModeOn = false;
+  private UIAutomatorClient uiAutomatorClient = null;
+  private BootstrapServer bootstrapServer;
+
+  private final Logger log = Logger.getLogger(this.getClass().getName());
 
   ActiveSession(String sessionKey, SelendroidCapabilities desiredCapabilities, AndroidApp aut,
-      AndroidDevice device, int selendroidPort, SelendroidStandaloneDriver driver) {
+                AndroidDevice device, int selendroidPort, SelendroidStandaloneDriver driver) {
     this.selendroidServerPort = selendroidPort;
     this.sessionKey = sessionKey;
     this.aut = aut;
     this.device = device;
     this.desiredCapabilities = desiredCapabilities;
+    this.bootstrapServer = null;
     stopSessionTimer.schedule(new SessionTimeoutTask(driver, sessionKey), driver
         .getSelendroidConfiguration().getSessionTimeoutMillis());
   }
@@ -92,10 +103,74 @@ public class ActiveSession {
 
   public void stopSessionTimer() {
     stopSessionTimer.cancel();
+    disconnectFromUiAutomatorServer();
   }
 
   @Override
   public String toString() {
-    return "ActiveSession [sessionKey=" + sessionKey + ", aut=" + aut + ", device=" + device + "]";
+      return "ActiveSession [sessionKey=" + sessionKey + ", aut=" + aut + ", device=" + device + "]";
+  }
+
+  public void setUiAutomationModeOn() {
+      if (!uiAutomationModeOn) {
+          startBootstrapServer();
+          try {
+              Thread.sleep(2000);
+          } catch (InterruptedException e) {
+              e.printStackTrace();
+          }
+          connectToUiAutomatorServer();
+          uiAutomationModeOn = true;
+      }
+  }
+
+  public void setUiAutomationModeOff() {
+      if (uiAutomationModeOn) {
+          disconnectFromUiAutomatorServer();
+          uiAutomationModeOn = false;
+          uiAutomatorClient = null;
+          stopBootstrapServer();
+      }
+  }
+
+  public boolean isUiAutomationMode() {
+      return this.uiAutomationModeOn;
+  }
+
+  public UIAutomatorClient getUiAutomatorClient() {
+      return uiAutomatorClient;
+  }
+
+  private void connectToUiAutomatorServer() {
+      try {
+          uiAutomatorClient = new UIAutomatorClient(device.getWlan());
+          uiAutomatorClient.connect();
+      } catch (Exception e) {
+          e.printStackTrace();
+      }
+  }
+
+  private void disconnectFromUiAutomatorServer() {
+      if (uiAutomatorClient != null) {
+          uiAutomatorClient.disconnect();
+          uiAutomatorClient = null;
+      }
+  }
+
+  private void startBootstrapServer() {
+      // need to start bootstrap server
+      log.info("[MYDEBUG] bootstrapServer starting");
+      log.info("[MYDEBUG] deice serial:" +  device.getSerial());
+      bootstrapServer = new BootstrapServer(device.getSerial(), log);
+      bootstrapServer.start();
+      log.info("[MYDEBUG] bootstrapServer started");
+  }
+
+  private void stopBootstrapServer() {
+      log.info("[MYDEBUG] bootstrapServer stoping");
+      bootstrapServer.stop();
+      bootstrapServer = null;
+      device.stopBootstrapServer();
   }
 }
+

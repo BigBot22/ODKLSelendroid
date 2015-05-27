@@ -15,14 +15,11 @@ package io.selendroid.server.handler;
 
 import io.selendroid.android.AndroidDevice;
 import io.selendroid.exceptions.SelendroidException;
-import io.selendroid.exceptions.ShellCommandException;
-import io.selendroid.io.ShellCommand;
 import io.selendroid.server.BaseSelendroidServerHandler;
 import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
 import io.selendroid.server.model.ActiveSession;
 import io.selendroid.server.util.HttpClientUtil;
-import org.apache.commons.exec.CommandLine;
 import org.apache.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.json.JSONException;
@@ -34,128 +31,81 @@ import java.util.logging.Logger;
 
 public class RequestRedirectHandler extends BaseSelendroidServerHandler {
   private static final Logger log = Logger.getLogger(RequestRedirectHandler.class.getName());
-  private boolean isUIAutomatorMode;
-  private UIAutomatorClient uiAutomatorClient;
 
   public RequestRedirectHandler(String mappedUri) {
     super(mappedUri);
-    isUIAutomatorMode = false;
-    uiAutomatorClient = null;
   }
 
   @Override
   public Response handle(final HttpRequest request) throws JSONException {
 
-    log.info("[DEBUG] request uri:" + request.uri());
-    log.info("[DEBUG] request body:" + request.body());
-    log.info("[DEBUG] request data:" + request.data());
+    log.info("[DEBUG] request \nuri:" + request.uri() +
+     "\nbody:" + request.body() +
+     "\ndata:" + request.data());
+
+    final String sessionId = getSessionId(request);
+    final ActiveSession activeSession = getSelendroidDriver(request).getActiveSession(sessionId);
 
     if (request.uri().contains("window")) {
         log.info("[DEBUG] get window request");
         if (request.body().contains("UIAUTOMATOR")) {
             log.info("[DEBUG] tryig switch to uiautomator mode ");
-            if (isUIAutomatorMode) {
-                final String sessionId = getSessionId(request);
-//                return new Response() {
-//                    @Override
-//                    public String getSessionId() {
-//                        return sessionId;
-//                    }
-//
-//                    @Override
-//                    public String render() {
-//                        return "it is already UIAUTOMATOR mode";
-//                    }
-//                };
+            Object value = "";
+            if (activeSession.isUiAutomationMode()) {
                 log.info("[DEBUG] it is already UIAUTOMATOR mode");
-                new SelendroidResponse(sessionId, 200, "it is already UIAUTOMATOR mode");
+                return new SelendroidResponse(sessionId, 0, value);
             } else {
-                isUIAutomatorMode = initUIAutomationMode();
-                log.info("[DEBUG] UIAutomatorMode ON");
+                log.info("[DEBUG] setUiAutomationModeOn for session:" + activeSession);
+                activeSession.setUiAutomationModeOn();
+                log.info("[DEBUG] UIAutomatorMode " + (activeSession.isUiAutomationMode()? "ON" : "OFF"));
+                return new SelendroidResponse(sessionId, 0, value);
             }
         } else {
             if (request.body().contains("INSTRUMENTATION")) {
                 log.info("[DEBUG] try to switch to instrumentation mode");
-
-                if (!isUIAutomatorMode) {
-                    final String sessionId = getSessionId(request);
+                Object value = "";
+                if (!activeSession.isUiAutomationMode()) {
                     log.info("[DEBUG] it is already INSTRUMENTATION mode");
-
-//                return new Response() {
-//                    @Override
-//                    public String getSessionId() {
-//                        return sessionId;
-//                    }
-//
-//                    @Override
-//                    public String render() {
-//                        return "it is already UIAUTOMATOR mode";
-//                    }
-//                };
-                    new SelendroidResponse(sessionId, 200, "it is already INSTRUMENTATION mode");
+                    return new SelendroidResponse(sessionId, 0, value);
                 } else {
-                    stopUIAutomationMode();
-                    isUIAutomatorMode = false;
-                    log.info("[DEBUG] UIAutomatorMode OFF");
+                    activeSession.setUiAutomationModeOff();
+                    log.info("[DEBUG] UIAutomatorMode OFF , isUiAutomationMoge:" + activeSession.isUiAutomationMode());
+                    return new SelendroidResponse(sessionId, 0, value);
                 }
-            } else {
-                return instumentationHendler(request);
             }
         }
     }
 
-    if (isUIAutomatorMode) {
+    if (activeSession.isUiAutomationMode()) {
         return uiAutomatorHendler(request);
     } else {
         return instumentationHendler(request);
     }
   }
 
-    private void stopUIAutomationMode() {
-
-    }
-
-    private Response uiAutomatorHendler(HttpRequest request) {
+    private Response uiAutomatorHendler(HttpRequest request) throws JSONException {
         log.info("[DEBUG] hendling uiautomator instruction");
         String sessionId = getSessionId(request);
-        int status = 200;
-        String value = "";
-        log.info("[DEBUG] selendroidRequestMOdifier begin");
-        String modifiedRequest = selendroidRequestMOdifier(request);
+        int status = 0;
+        Object value = "";
+        log.info("[DEBUG] request begin");
 
-        try {
-            value = uiAutomatorClient.send(modifiedRequest);
-        } catch (Exception e) {
-            e.printStackTrace();
+        JSONObject result = UiAutomatorConnector.request(getSelendroidDriver(request).getActiveSession(sessionId).getUiAutomatorClient(), request);
+        if (result.has("value")) {
+            try {
+                value = result.get("value");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
-
+        if (result.has("status")) {
+            try {
+                status = result.getInt("status");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
         return new SelendroidResponse(sessionId, status, value);
-    }
-
-    private String selendroidRequestMOdifier(HttpRequest request) {
-        return "{\"cmd\":\"action\",\"action\":\"wake\",\"params\":{}}\n";
-    }
-
-    private boolean initUIAutomationMode() {
-        //TODO: install bootstrap to phoneddd
-//        String cmd = "/Users/bogdan/android-sdk-macosx/platform-tools/adb -s 4df154e30f2e9fb1 shell uiautomator runtest AppiumBootstrap.jar -c io.appium.android.bootstrap.Bootstrap";
-//        try {
-//            log.info("[DEBUG] execAsync:" + cmd);
-//            ShellCommand.execAsync(new CommandLine(cmd));
-//        } catch (ShellCommandException e) {
-//            log.info("[DEBUG] ShellCommandException:");
-//            e.printStackTrace();
-//        }
-        try {
-            log.info("[DEBUG] ceating UIAutomatorClient");
-            uiAutomatorClient = new UIAutomatorClient();
-        } catch (Exception e) {
-            log.info("[DEBUG] UIAutomatorClient Exception:");
-            e.printStackTrace();
-            return false;
-        }
-        log.info("[DEBUG] ceated UIAutomatorClient");
-        return true;
     }
 
     private Response instumentationHendler(HttpRequest request) throws JSONException {
@@ -213,7 +163,8 @@ public class RequestRedirectHandler extends BaseSelendroidServerHandler {
       }
       int status = response.getInt("status");
 
-      log.fine("return value from selendroid android server: " + value);
+      log.fine("return response from selendroid android server: " + response.toString());
+      log.fine("return value from selendroid android server: " + String.valueOf(value));
       log.fine("return status from selendroid android server: " + status);
 
       return new SelendroidResponse(sessionId, status, value);

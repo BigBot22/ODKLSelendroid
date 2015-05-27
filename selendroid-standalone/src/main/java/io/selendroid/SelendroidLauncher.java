@@ -19,18 +19,15 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.base.Throwables;
 
 import io.selendroid.exceptions.AndroidSdkException;
-import io.selendroid.io.ShellCommand;
 import io.selendroid.log.LogLevelEnum;
 import io.selendroid.server.SelendroidStandaloneServer;
 import io.selendroid.server.util.HttpClientUtil;
 
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class SelendroidLauncher {
 

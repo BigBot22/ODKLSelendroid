@@ -248,7 +248,7 @@ public class SelendroidStandaloneDriver implements ServerDetails {
       emulator.setIDevice(deviceManager.getVirtualDevice(emulator.getAvdName()));
     }
     boolean appInstalledOnDevice = device.isInstalled(app);
-    if (!appInstalledOnDevice || serverConfiguration.isForceReinstall()) {
+      if (!appInstalledOnDevice || serverConfiguration.isForceReinstall()) {
       device.install(app);
     } else {
       log.info("the app under test is already installed.");
@@ -257,8 +257,10 @@ public class SelendroidStandaloneDriver implements ServerDetails {
     int port = getNextSelendroidServerPort();
     Boolean selendroidInstalledSuccessfully =
         device.isInstalled("io.selendroid." + app.getBasePackage());
+    log.info("is installed selendroid server apk:" + selendroidInstalledSuccessfully);
     if (!selendroidInstalledSuccessfully || serverConfiguration.isForceReinstall()) {
-      AndroidApp selendroidServer = createSelendroidServerApk(app);
+        log.info("installing selendroid server apk");
+        AndroidApp selendroidServer = createSelendroidServerApk(app);
 
       selendroidInstalledSuccessfully = device.install(selendroidServer);
       if (!selendroidInstalledSuccessfully) {
@@ -287,7 +289,7 @@ public class SelendroidStandaloneDriver implements ServerDetails {
     // It's GO TIME!
     // start the selendroid server on the device and make sure it's up
     try {
-      device.startSelendroid(app, port);
+        device.startSelendroid(app, port);
     } catch (AndroidSdkException e) {
       log.info("error while starting selendroid: " + e.getMessage());
 
@@ -354,7 +356,9 @@ public class SelendroidStandaloneDriver implements ServerDetails {
       wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("AndroidDriver")));
     }
 
-    return sessionId;
+
+
+      return sessionId;
   }
 
   private AndroidApp createSelendroidServerApk(AndroidApp aut) throws AndroidSdkException {
@@ -439,7 +443,7 @@ public class SelendroidStandaloneDriver implements ServerDetails {
       } catch (Exception e) {
         // can happen, ignore
       }
-      deviceStore.release(session.getDevice(), session.getAut());
+        deviceStore.release(session.getDevice(), session.getAut());
 
       // remove session
       sessions.remove(sessionId);

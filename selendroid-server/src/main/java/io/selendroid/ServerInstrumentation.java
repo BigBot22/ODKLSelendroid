@@ -137,7 +137,9 @@ public class ServerInstrumentation extends Instrumentation implements ServerDeta
   @Override
   public void onStart() {
     SelendroidLogger.error("Error");
-    SelendroidLogger.debug("debug");
+    SelendroidLogger.info("info");
+    SelendroidLogger.verbose("verbose");
+    SelendroidLogger.warning("warning");
     synchronized (ServerInstrumentation.class) {
       try {
         startMainActivity();
