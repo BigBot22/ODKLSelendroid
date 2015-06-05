@@ -43,7 +43,7 @@ public class SelendroidStandaloneDriverTest {
   public static final String APK_FILE = "src/test/resources/selendroid-test-app.apk";
   public static final String INVALID_APK_FILE =
       "src/test/resources/selendroid-test-app-invalid.apk";
-  private static final Integer EMULATOR_PORT = 5560;
+  private static final Integer EMULATOR_PORT = 5555;
 
   @Test
   public void shouldInitDriver() throws Exception {
