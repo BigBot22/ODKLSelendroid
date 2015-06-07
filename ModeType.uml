@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>io.selendroid.android.internal.ModeType</OriginalElement>
+  <nodes>
+    <node x="222.0" y="306.0">io.selendroid.SelendroidLauncher</node>
+    <node x="275.0" y="79.0">io.selendroid.android.impl.AbstractDevice</node>
+    <node x="0.0" y="380.0">io.selendroid.server.handler.UIAutomatorClient</node>
+    <node x="68.0" y="158.0">io.selendroid.android.internal.ModeType</node>
+    <node x="0.0" y="232.0">io.selendroid.server.model.DefaultSelendroidDriver</node>
+    <node x="227.0" y="232.0">io.selendroid.server.handler.RequestRedirectHandler</node>
+    <node x="194.0" y="380.0">io.selendroid.server.model.BootstrapServer</node>
+    <node x="0.0" y="0.0">java.lang.Comparable</node>
+    <node x="0.0" y="306.0">io.selendroid.server.handler.UiAutomatorConnector</node>
+    <node x="276.5" y="0.0">io.selendroid.android.AndroidDevice</node>
+    <node x="127.0" y="0.0">java.io.Serializable</node>
+    <node x="82.5" y="79.0">java.lang.Enum</node>
+    <node x="0.0" y="454.0">io.selendroid.server.model.ActiveSession</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="io.selendroid.server.handler.UiAutomatorConnector" target="io.selendroid.server.handler.UIAutomatorClient">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="io.selendroid.server.model.ActiveSession" target="io.selendroid.server.model.BootstrapServer">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="java.lang.Enum" target="java.io.Serializable">
+      <point x="16.75" y="-14.5" />
+      <point x="132.75" y="54.0" />
+      <point x="178.5" y="54.0" />
+      <point x="0.0" y="14.5" />
+    </edge>
+    <edge source="io.selendroid.android.impl.AbstractDevice" target="io.selendroid.android.AndroidDevice">
+      <point x="0.0" y="-14.5" />
+      <point x="0.0" y="14.5" />
+    </edge>
+    <edge source="io.selendroid.server.model.ActiveSession" target="io.selendroid.android.AndroidDevice">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="io.selendroid.server.model.ActiveSession" target="io.selendroid.server.handler.UIAutomatorClient">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="io.selendroid.android.internal.ModeType" target="java.lang.Enum">
+      <point x="0.0" y="-14.5" />
+      <point x="0.0" y="14.5" />
+    </edge>
+    <edge source="java.lang.Enum" target="java.lang.Comparable">
+      <point x="-16.75" y="-14.5" />
+      <point x="99.25" y="54.0" />
+      <point x="53.5" y="54.0" />
+      <point x="0.0" y="14.5" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="204.5" y="241.5" />
+  <SelectedNodes>
+    <node>io.selendroid.SelendroidLauncher</node>
+    <node>io.selendroid.android.impl.AbstractDevice</node>
+    <node>io.selendroid.server.handler.UIAutomatorClient</node>
+    <node>io.selendroid.android.internal.ModeType</node>
+    <node>io.selendroid.server.model.DefaultSelendroidDriver</node>
+    <node>io.selendroid.server.handler.RequestRedirectHandler</node>
+    <node>io.selendroid.server.model.BootstrapServer</node>
+    <node>java.lang.Comparable</node>
+    <node>io.selendroid.server.handler.UiAutomatorConnector</node>
+    <node>io.selendroid.android.AndroidDevice</node>
+    <node>java.io.Serializable</node>
+    <node>java.lang.Enum</node>
+    <node>io.selendroid.server.model.ActiveSession</node>
+  </SelectedNodes>
+  <Categories />
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>public</VISIBILITY>
+</Diagram>
+
